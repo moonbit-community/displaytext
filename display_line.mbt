@@ -29,6 +29,36 @@ pub fn DisplayPosition::column(self : DisplayPosition) -> Int {
 
 ///|
 /// A terminal display unit with stable textual and display boundaries.
+///
+/// Textual boundaries are legal positions in the original line. Display
+/// boundaries are terminal display columns. Both ranges are half-open:
+/// `[start, end)`.
+///
+/// For example, `display_line("a你好b")` has these units:
+///
+/// ```text
+/// textual:   0     1      2      3     4
+///            | "a" | "你" | "好" | "b" |
+/// display:   0     1      3      5     6
+/// ```
+///
+/// A ZWJ emoji sequence is one unit even when it is made from several emoji
+/// joined together. For `display_line("x👨‍👩‍👧‍👦y")`:
+///
+/// ```text
+/// textual:   0     1      2     3
+///            | "x" | "👨‍👩‍👧‍👦" | "y" |
+/// display:   0     1      3     4
+/// ```
+///
+/// A zero-width unit has the same display start and end. For
+/// `display_line("a\u{200B}b")`:
+///
+/// ```text
+/// textual:    0     1            2     3
+///             | "a" | "\u{200B}" | "b" |
+/// display:    0     1            1     2
+/// ```
 struct DisplayUnit {
   text : StringView
   width : Int

@@ -16,6 +16,30 @@ fn display_unit_summary(line : @displayline.DisplayLine) -> String {
 }
 
 ///|
+fn view_at_or_before(line : @displayline.DisplayLine, column : Int) -> String {
+  line
+  .view(
+    line.start(),
+    line.textual_position_at_or_before(
+      @displayline.DisplayPosition::new(column~),
+    ),
+  )
+  .to_owned()
+}
+
+///|
+fn view_at_or_after(line : @displayline.DisplayLine, column : Int) -> String {
+  line
+  .view(
+    line.start(),
+    line.textual_position_at_or_after(
+      @displayline.DisplayPosition::new(column~),
+    ),
+  )
+  .to_owned()
+}
+
+///|
 test "display line exposes display units" {
   let line = @displayline.display_line("a你好b")
   inspect(line.width(), content="6")
@@ -59,6 +83,17 @@ test "display line maps textual and display positions" {
 }
 
 ///|
+test "display line maps exact display boundaries" {
+  let line = @displayline.display_line("a你好b")
+  inspect(view_at_or_before(line, 1), content="a")
+  inspect(view_at_or_after(line, 1), content="a")
+  inspect(view_at_or_before(line, 3), content="a你")
+  inspect(view_at_or_after(line, 3), content="a你")
+  inspect(view_at_or_before(line, 5), content="a你好")
+  inspect(view_at_or_after(line, 5), content="a你好")
+}
+
+///|
 test "display line handles boundary positions" {
   let line = @displayline.display_line("a你好b")
   let start = line.start()
@@ -86,6 +121,19 @@ test "display line handles boundary positions" {
 }
 
 ///|
+test "display line handles empty input" {
+  let line = @displayline.display_line("")
+  let start = line.start()
+  inspect(line.width(), content="0")
+  inspect(line.end() == start, content="true")
+  inspect(line.next(start) is None, content="true")
+  inspect(line.prev(start) is None, content="true")
+  inspect(line.view(start, line.end()), content="")
+  inspect(line.truncate(1), content="")
+  inspect(line.truncate(0), content="")
+}
+
+///|
 test "display line keeps emoji zwj as one unit" {
   let line = @displayline.display_line("x👨‍👩‍👧‍👦y")
   inspect(line.width(), content="4")
@@ -93,6 +141,43 @@ test "display line keeps emoji zwj as one unit" {
     display_unit_summary(line),
     content="x:w1:c0-1|👨‍👩‍👧‍👦:w2:c1-3|y:w1:c3-4",
   )
+}
+
+///|
+test "display line keeps combining mark with base" {
+  let line = @displayline.display_line("e\u{301}x")
+  let after_accented_e = line.next(line.start()).unwrap()
+  inspect(line.width(), content="2")
+  inspect(line.view(line.start(), after_accented_e), content="e\u{301}")
+  inspect(line.display_position(after_accented_e).column(), content="1")
+}
+
+///|
+test "display line exposes zero-width unit boundaries" {
+  let line = @displayline.display_line("a\u{200B}b")
+  let units = line.units()
+  let after_a = line.next(line.start()).unwrap()
+  let after_zero = line.next(after_a).unwrap()
+  inspect(line.width(), content="2")
+  inspect(units.length(), content="3")
+  inspect(units[1].text() == "\u{200B}", content="true")
+  inspect(units[1].width(), content="0")
+  inspect(units[1].display_start().column(), content="1")
+  inspect(units[1].display_end().column(), content="1")
+  inspect(line.display_position(after_a).column(), content="1")
+  inspect(line.display_position(after_zero).column(), content="1")
+  inspect(view_at_or_before(line, 1), content="a\u{200B}")
+  inspect(view_at_or_after(line, 1), content="a")
+}
+
+///|
+test "display line handles leading zero-width unit" {
+  let line = @displayline.display_line("\u{200B}a")
+  let after_zero = line.next(line.start()).unwrap()
+  inspect(line.width(), content="1")
+  inspect(line.display_position(after_zero).column(), content="0")
+  inspect(view_at_or_before(line, 0), content="\u{200B}")
+  inspect(view_at_or_after(line, 0), content="")
 }
 
 ///|
@@ -113,4 +198,23 @@ test "display line truncates by display units" {
   inspect(line.truncate(6), content="a你好b")
   inspect(line.truncate(4, suffix=""), content="a你")
   inspect(line.truncate(1, suffix="你好"), content="")
+}
+
+///|
+test "display line truncates without cutting complex units" {
+  let emoji_line = @displayline.display_line("x👨‍👩‍👧‍👦y")
+  inspect(emoji_line.truncate(3), content="x…")
+  let combining_line = @displayline.display_line("e\u{301}xy")
+  inspect(combining_line.truncate(2), content="e\u{301}…")
+  let zero_width_line = @displayline.display_line("a\u{200B}b")
+  inspect(zero_width_line.truncate(1, suffix=""), content="a\u{200B}")
+}
+
+///|
+test "display line units returns a copy" {
+  let line = @displayline.display_line("a你好b")
+  let units = line.units()
+  units.push(units[0])
+  inspect(units.length(), content="5")
+  inspect(line.units().length(), content="4")
 }
