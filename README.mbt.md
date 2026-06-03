@@ -1,13 +1,13 @@
 # displayline
 
-Grapheme-aware display-cell line layout for cursor mapping and truncation in
-terminal UIs.
+Grapheme-aware display-cell text boundaries for terminal UIs.
 
 `displayline` combines Unicode grapheme cluster boundaries with
 [`unicodewidth`](https://github.com/moonbit-community/unicodewidth.mbt)
-display-width rules. TUI authors can use it to move through a single logical
-line, map between textual positions and terminal columns, create zero-copy
-views, and truncate without cutting through a display unit.
+display-width rules. TUI authors can split plain text into hard lines, move
+through each line by safe textual positions, map between textual positions and
+terminal columns, create zero-copy views, and truncate without cutting through a
+display unit.
 
 ## Installation
 
@@ -17,15 +17,30 @@ views, and truncate without cutting through a display unit.
 
 ## API
 
-### `display_line(s : @string.View, cjk? : Bool = false) -> DisplayLine`
+### `DisplayLine::new(s : String, cjk? : Bool = false) -> DisplayLine`
 
-Parses a single logical line into terminal display units and legal textual
-positions.
+Parses `s` as one terminal display line.
 
-- `s`: the single-line text to lay out
+- `s`: text that the caller already wants to treat as a single line
 - `cjk`: when `true`, ambiguous-width characters are treated as wide
 
-The returned `DisplayLine` exposes:
+This constructor does not split hard line breaks. If `s` contains `\n`,
+`\r\n`, or `\r`, those characters remain part of the returned `DisplayLine`.
+Use `split_lines` for arbitrary multiline text.
+
+### `split_lines(s : @string.View, cjk? : Bool = false) -> Array[DisplayLine]`
+
+Splits plain text into hard lines and parses each line into terminal display
+boundaries.
+
+- `s`: plain text that may contain hard line breaks
+- `cjk`: when `true`, ambiguous-width characters are treated as wide
+
+Hard line breaks are `\n`, `\r\n`, and `\r`. They are not included in returned
+lines. Empty lines are preserved, including the trailing empty line after a
+final line break.
+
+Each returned `DisplayLine` exposes:
 
 - total display width with `width()`
 - legal textual boundaries with `start()`, `end()`, `next()`, and `prev()`
@@ -33,7 +48,6 @@ The returned `DisplayLine` exposes:
 - conversion from display columns to textual boundaries with
   `textual_position_at_or_before()` and `textual_position_at_or_after()`
 - zero-copy text views with `view()`
-- soft wrapping with `wrap()`
 - terminal-cell truncation with `truncate()`
 
 ## Usage
@@ -41,7 +55,8 @@ The returned `DisplayLine` exposes:
 ```mbt nocheck
 ///|
 test {
-  let line = @displayline.display_line("a你好b")
+  let lines = @displayline.split_lines("a你好b\nnext")
+  let line = lines[0]
 
   // Whole-line display width.
   assert_eq(line.width(), 6)
@@ -71,26 +86,28 @@ test {
 }
 ```
 
-### Soft Wrapping
+### Consumer-Owned Wrapping
 
-`DisplayLine::wrap(width)` returns display ranges that cover the original line
-without cutting through a display unit. Use each range with `DisplayRange::view`
-to render a visual row.
+Soft wrapping is a layout policy owned by the application. A TUI can maintain
+its own used display columns and ask a `DisplayLine` for the legal textual
+boundary that fits the remaining width.
 
 ```mbt nocheck
 ///|
 test {
-  let line = @displayline.display_line("a你好b")
-  let rows = line.wrap(3)
+  let line = @displayline.DisplayLine::new("ab你好")
+  let remaining = @displayline.DisplayPosition::new(column=3)
+  let end = line.textual_position_at_or_before(remaining)
 
-  assert_eq(rows[0].view(line).to_owned(), "a你")
-  assert_eq(rows[0].width(), 3)
-  assert_eq(rows[1].view(line).to_owned(), "好b")
-  assert_eq(rows[1].width(), 3)
+  assert_eq(line.view(line.start(), end).to_owned(), "ab")
 }
 ```
 
 ## Concepts
+
+`DisplayLine` is one line of display-position state. Values created by
+`split_lines` never contain `\n`, `\r\n`, or `\r`; values created by
+`DisplayLine::new` contain exactly the text the caller passed in.
 
 `TextualPosition` is a legal boundary in the original line. Values are produced
 by `DisplayLine`; callers cannot construct arbitrary positions inside a display
@@ -99,18 +116,11 @@ unit.
 `DisplayPosition` is a zero-based terminal display column. Construct it with
 `DisplayPosition::new(column=...)`; negative columns are clamped to zero.
 
-`DisplayUnit` is the smallest slice this layout will step through or truncate
-across. Usually it is one grapheme cluster. When adjacent grapheme clusters form
-a non-additive display sequence, they are merged into one unit.
-
-`DisplayRange` is a half-open textual range on a `DisplayLine`, usually returned
-by `DisplayLine::wrap`. It carries the range's display width and can create a
-zero-copy view of the covered text.
-
 ## Scope
 
-This module is for one logical line in terminal display cells. It does not do
-paragraph layout, wrapping, bidi reordering, font shaping, or pixel measurement.
+This module provides terminal display-cell boundaries for plain text. It does
+not own viewport policy, soft wrapping, rich-text styling, bidi reordering, font
+shaping, or pixel measurement.
 
 ## Testing
 

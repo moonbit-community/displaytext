@@ -34,7 +34,7 @@ pub fn DisplayPosition::column(self : DisplayPosition) -> Int {
 /// boundaries are terminal display columns. Both ranges are half-open:
 /// `[start, end)`.
 ///
-/// For example, `display_line("a你好b")` has these units:
+/// For example, `split_lines("a你好b")[0]` has these units:
 ///
 /// ```text
 /// textual:   0     1      2      3     4
@@ -43,7 +43,7 @@ pub fn DisplayPosition::column(self : DisplayPosition) -> Int {
 /// ```
 ///
 /// A ZWJ emoji sequence is one unit even when it is made from several emoji
-/// joined together. For `display_line("x👨‍👩‍👧‍👦y")`:
+/// joined together. For `split_lines("x👨‍👩‍👧‍👦y")[0]`:
 ///
 /// ```text
 /// textual:   0     1      2     3
@@ -52,55 +52,37 @@ pub fn DisplayPosition::column(self : DisplayPosition) -> Int {
 /// ```
 ///
 /// A zero-width unit has the same display start and end. For
-/// `display_line("a\u{200B}b")`:
+/// `split_lines("a\u{200B}b")[0]`:
 ///
 /// ```text
 /// textual:    0     1            2     3
 ///             | "a" | "\u{200B}" | "b" |
 /// display:    0     1            1     2
 /// ```
-struct DisplayUnit {
+priv struct DisplayUnit {
   text : StringView
   width : Int
-  textual_start : TextualPosition
   textual_end : TextualPosition
-  display_start : DisplayPosition
   display_end : DisplayPosition
 }
 
 ///|
-/// Text covered by this display unit.
-pub fn DisplayUnit::text(self : DisplayUnit) -> StringView {
+fn DisplayUnit::text(self : DisplayUnit) -> StringView {
   self.text
 }
 
 ///|
-/// Display width of this unit in terminal cells.
-pub fn DisplayUnit::width(self : DisplayUnit) -> Int {
+fn DisplayUnit::width(self : DisplayUnit) -> Int {
   self.width
 }
 
 ///|
-/// Textual boundary before this display unit.
-pub fn DisplayUnit::textual_start(self : DisplayUnit) -> TextualPosition {
-  self.textual_start
-}
-
-///|
-/// Textual boundary after this display unit.
-pub fn DisplayUnit::textual_end(self : DisplayUnit) -> TextualPosition {
+fn DisplayUnit::textual_end(self : DisplayUnit) -> TextualPosition {
   self.textual_end
 }
 
 ///|
-/// Display-column boundary before this display unit.
-pub fn DisplayUnit::display_start(self : DisplayUnit) -> DisplayPosition {
-  self.display_start
-}
-
-///|
-/// Display-column boundary after this display unit.
-pub fn DisplayUnit::display_end(self : DisplayUnit) -> DisplayPosition {
+fn DisplayUnit::display_end(self : DisplayUnit) -> DisplayPosition {
   self.display_end
 }
 
@@ -123,9 +105,7 @@ fn make_display_unit(
   {
     text,
     width,
-    textual_start: TextualPosition(textual_index),
     textual_end: TextualPosition(textual_index + 1),
-    display_start: DisplayPosition(display_column),
     display_end: DisplayPosition(display_column + width),
   }
 }
@@ -209,12 +189,7 @@ fn display_units_for(source : String, cjk : Bool) -> Array[DisplayUnit] {
 }
 
 ///|
-/// Parse `text` as one terminal display line.
-///
-/// The returned `DisplayLine` exposes safe textual boundaries and display
-/// columns for TUI editing, truncation, and hit testing.
-pub fn display_line(text : StringView, cjk? : Bool = false) -> DisplayLine {
-  let source = text.to_owned()
+fn make_display_line(source : String, cjk : Bool) -> DisplayLine {
   let width = @unicodewidth.str_width(source, cjk~)
   let units = display_units_for(source, cjk)
   let mut unit_width = 0
@@ -229,47 +204,46 @@ pub fn display_line(text : StringView, cjk? : Bool = false) -> DisplayLine {
 }
 
 ///|
+/// Parse `text` as one terminal display line.
+///
+/// This constructor does not split hard line breaks. If `text` contains `\n`,
+/// `\r\n`, or `\r`, they remain part of this single `DisplayLine`. Use
+/// `split_lines` when the input may contain multiple hard lines.
+pub fn DisplayLine::new(text : String, cjk? : Bool = false) -> DisplayLine {
+  make_display_line(text, cjk)
+}
+
+///|
+/// Split `text` into terminal display lines.
+///
+/// Hard line breaks (`\n`, `\r\n`, and `\r`) are not included in the returned
+/// lines. Empty lines are preserved, including the trailing empty line after a
+/// final line break. Each returned `DisplayLine` exposes safe textual
+/// boundaries and display columns for TUI editing, truncation, and hit testing.
+pub fn split_lines(
+  text : StringView,
+  cjk? : Bool = false,
+) -> Array[DisplayLine] {
+  let source = text.to_owned()
+  let lines : Array[DisplayLine] = []
+  let mut current = StringBuilder()
+  for grapheme in @grapheme.grapheme_iter(source) {
+    let g = grapheme.to_owned()
+    if g == "\n" || g == "\r\n" || g == "\r" {
+      lines.push(DisplayLine::new(current.to_string(), cjk~))
+      current = StringBuilder()
+    } else {
+      current.write_string(g)
+    }
+  }
+  lines.push(DisplayLine::new(current.to_string(), cjk~))
+  lines
+}
+
+///|
 /// Total display width of this line in terminal cells.
 pub fn DisplayLine::width(self : DisplayLine) -> Int {
   self.width
-}
-
-///|
-/// Display units in left-to-right order.
-pub fn DisplayLine::units(self : DisplayLine) -> Array[DisplayUnit] {
-  self.units.copy()
-}
-
-///|
-/// Soft-wrap this line into display ranges no wider than `width`, unless a
-/// single display unit is wider than `width` and must occupy its own range.
-///
-/// `width <= 0` is treated as `1`. The result always contains at least one
-/// range, even for an empty line.
-pub fn DisplayLine::wrap(
-  self : DisplayLine,
-  width : Int,
-) -> Array[DisplayRange] {
-  let width = width.max(1)
-  let ranges : Array[DisplayRange] = []
-  let mut range_start = self.start()
-  let mut range_end = range_start
-  let mut range_width = 0
-  let mut range_filled = false
-  for unit in self.units {
-    let unit_width = unit.width()
-    if range_filled && range_width + unit_width > width {
-      ranges.push({ start: range_start, end: range_end, width: range_width })
-      range_start = unit.textual_start()
-      range_width = 0
-      range_filled = false
-    }
-    range_width += unit_width
-    range_end = unit.textual_end()
-    range_filled = true
-  }
-  ranges.push({ start: range_start, end: range_end, width: range_width })
-  ranges
 }
 
 ///|
