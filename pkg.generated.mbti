@@ -1,0 +1,39 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonbit-community/displayline"
+
+// Values
+pub fn display_line(StringView, cjk? : Bool) -> DisplayLine
+
+// Errors
+
+// Types and methods
+type DisplayLine
+pub fn DisplayLine::display_position(Self, TextualPosition) -> DisplayPosition
+pub fn DisplayLine::end(Self) -> TextualPosition
+pub fn DisplayLine::next(Self, TextualPosition) -> TextualPosition?
+pub fn DisplayLine::prev(Self, TextualPosition) -> TextualPosition?
+pub fn DisplayLine::start(Self) -> TextualPosition
+pub fn DisplayLine::textual_position_at_or_after(Self, DisplayPosition) -> TextualPosition
+pub fn DisplayLine::textual_position_at_or_before(Self, DisplayPosition) -> TextualPosition
+pub fn DisplayLine::truncate(Self, Int, suffix? : StringView) -> String
+pub fn DisplayLine::units(Self) -> Array[DisplayUnit]
+pub fn DisplayLine::view(Self, TextualPosition, TextualPosition) -> StringView
+pub fn DisplayLine::width(Self) -> Int
+
+type DisplayPosition derive(Eq)
+pub fn DisplayPosition::column(Self) -> Int
+pub fn DisplayPosition::new(column~ : Int) -> Self
+
+type DisplayUnit
+pub fn DisplayUnit::display_end(Self) -> DisplayPosition
+pub fn DisplayUnit::display_start(Self) -> DisplayPosition
+pub fn DisplayUnit::text(Self) -> StringView
+pub fn DisplayUnit::textual_end(Self) -> TextualPosition
+pub fn DisplayUnit::textual_start(Self) -> TextualPosition
+pub fn DisplayUnit::width(Self) -> Int
+
+type TextualPosition derive(Eq)
+
+// Type aliases
+
+// Traits
