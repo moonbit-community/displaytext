@@ -18,6 +18,7 @@ pub fn DisplayText::new(String, cjk? : Bool) -> Self
 pub fn DisplayText::next(Self, TextualPosition) -> TextualPosition?
 pub fn DisplayText::prev(Self, TextualPosition) -> TextualPosition?
 pub fn DisplayText::start(Self) -> TextualPosition
+pub fn DisplayText::text(Self) -> String
 pub fn DisplayText::textual_position_at_or_after(Self, DisplayPosition) -> TextualPosition
 pub fn DisplayText::textual_position_at_or_before(Self, DisplayPosition) -> TextualPosition
 pub fn DisplayText::truncate(Self, Int, suffix? : StringView) -> String

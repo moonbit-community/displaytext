@@ -214,6 +214,12 @@ pub fn DisplayText::new(text : String, cjk? : Bool = false) -> DisplayText {
 }
 
 ///|
+/// Return the original text owned by this display text run.
+pub fn DisplayText::text(self : DisplayText) -> String {
+  self.text
+}
+
+///|
 /// Split `text` into hard-line display text runs.
 ///
 /// Hard line breaks (`\n`, `\r\n`, and `\r`) are not included in the returned

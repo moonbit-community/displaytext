@@ -10,15 +10,10 @@ fn line(text : String) -> @displaytext.DisplayText {
 }
 
 ///|
-fn line_text(line : @displaytext.DisplayText) -> String {
-  line.view(line.start(), line.end()).to_owned()
-}
-
-///|
 fn line_texts(lines : Array[@displaytext.DisplayText]) -> String {
   let parts : Array[String] = []
   for line in lines {
-    parts.push(line_text(line))
+    parts.push(line.text())
   }
   parts.join("|")
 }
@@ -88,7 +83,7 @@ test "split lines preserves empty lines" {
 ///|
 test "display line constructor treats input as one line" {
   let line = @displaytext.DisplayText::new("a\nb")
-  inspect(line_text(line), content="a\nb")
+  inspect(line.text(), content="a\nb")
   inspect(@displaytext.split_lines("a\nb").length(), content="2")
 }
 
