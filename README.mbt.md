@@ -52,7 +52,7 @@ Each returned `DisplayText` exposes:
 
 ## Usage
 
-```mbt nocheck
+```mbt check
 ///|
 test {
   let lines = @displaytext.split_lines("a你好b\nnext")
@@ -70,14 +70,12 @@ test {
   let middle = @displaytext.DisplayPosition::new(column=2)
   assert_eq(
     line
-    .view(line.start(), line.textual_position_at_or_before(middle))
-    .to_owned(),
+    .view(line.start(), line.textual_position_at_or_before(middle)),
     "a",
   )
   assert_eq(
     line
-    .view(line.start(), line.textual_position_at_or_after(middle))
-    .to_owned(),
+    .view(line.start(), line.textual_position_at_or_after(middle)),
     "a你",
   )
 
@@ -92,14 +90,14 @@ Soft wrapping is a layout policy owned by the application. A TUI can maintain
 its own used display columns and ask a `DisplayText` for the legal textual
 boundary that fits the remaining width.
 
-```mbt nocheck
+```mbt check
 ///|
 test {
   let line = @displaytext.DisplayText::new("ab你好")
   let remaining = @displaytext.DisplayPosition::new(column=3)
   let end = line.textual_position_at_or_before(remaining)
 
-  assert_eq(line.view(line.start(), end).to_owned(), "ab")
+  assert_eq(line.view(line.start(), end), "ab")
 }
 ```
 
