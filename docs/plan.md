@@ -1,8 +1,8 @@
-# DisplayLine extraction checkpoint
+# DisplayText extraction checkpoint
 
 ## Goal
 
-Create `moonbit-community/displayline` as the TUI-facing home for the
+Create `moonbit-community/displaytext` as the TUI-facing home for the
 grapheme-aware single-line display API extracted from
 `moonbit-community/unicodewidth`.
 
@@ -12,22 +12,22 @@ rules.
 
 ## Accepted design
 
-`displayline` owns the `DisplayLine` API and depends on:
+`displaytext` owns the `DisplayText` API and depends on:
 
 - `moonbit-community/unicodewidth` for terminal display-cell width rules.
 - `kawaz/grapheme` for legal textual boundaries.
 
 `unicodewidth` remains the lower-level width primitive module. It will not
-re-export `displayline`, because that would reverse the dependency direction and
+re-export `displaytext`, because that would reverse the dependency direction and
 create a cycle.
 
 ## Target files and surfaces
 
-- `moon.mod`: new module metadata for `moonbit-community/displayline`.
+- `moon.mod`: new module metadata for `moonbit-community/displaytext`.
 - `moon.pkg`: root package imports for `unicodewidth` and `grapheme`.
-- `display_line.mbt`: implementation of `DisplayLine`, `DisplayUnit`,
+- `display_text.mbt`: implementation of `DisplayText`, `DisplayUnit`,
   `TextualPosition`, and `DisplayPosition`.
-- `displayline_test.mbt`: black-box tests for units, position mapping, viewing,
+- `displaytext_test.mbt`: black-box tests for units, position mapping, viewing,
   and truncation.
 - `README.mbt.md` and `README.md`: documented usage examples.
 - `pkg.generated.mbti`: generated public interface from `moon info`.
@@ -36,22 +36,22 @@ create a cycle.
 
 Public API in this module:
 
-- `pub fn display_line(StringView, cjk? : Bool) -> DisplayLine`
-- opaque `DisplayLine`
+- `pub fn display_text(StringView, cjk? : Bool) -> DisplayText`
+- opaque `DisplayText`
 - opaque `DisplayUnit`
 - opaque `TextualPosition`
 - opaque `DisplayPosition`
-- `DisplayLine::width(Self) -> Int`
-- `DisplayLine::units(Self) -> Array[DisplayUnit]`
-- `DisplayLine::start(Self) -> TextualPosition`
-- `DisplayLine::end(Self) -> TextualPosition`
-- `DisplayLine::next(Self, TextualPosition) -> TextualPosition?`
-- `DisplayLine::prev(Self, TextualPosition) -> TextualPosition?`
-- `DisplayLine::display_position(Self, TextualPosition) -> DisplayPosition`
-- `DisplayLine::textual_position_at_or_before(Self, DisplayPosition) -> TextualPosition`
-- `DisplayLine::textual_position_at_or_after(Self, DisplayPosition) -> TextualPosition`
-- `DisplayLine::view(Self, TextualPosition, TextualPosition) -> StringView`
-- `DisplayLine::truncate(Self, Int, suffix? : StringView) -> String`
+- `DisplayText::width(Self) -> Int`
+- `DisplayText::units(Self) -> Array[DisplayUnit]`
+- `DisplayText::start(Self) -> TextualPosition`
+- `DisplayText::end(Self) -> TextualPosition`
+- `DisplayText::next(Self, TextualPosition) -> TextualPosition?`
+- `DisplayText::prev(Self, TextualPosition) -> TextualPosition?`
+- `DisplayText::display_position(Self, TextualPosition) -> DisplayPosition`
+- `DisplayText::textual_position_at_or_before(Self, DisplayPosition) -> TextualPosition`
+- `DisplayText::textual_position_at_or_after(Self, DisplayPosition) -> TextualPosition`
+- `DisplayText::view(Self, TextualPosition, TextualPosition) -> StringView`
+- `DisplayText::truncate(Self, Int, suffix? : StringView) -> String`
 - `DisplayUnit::text(Self) -> StringView`
 - `DisplayUnit::width(Self) -> Int`
 - `DisplayUnit::textual_start(Self) -> TextualPosition`
@@ -64,11 +64,11 @@ Public API in this module:
 ## Open questions
 
 None for the initial extraction. Future performance work can revisit
-`DisplayLine::units` returning an array copy versus a custom iterator.
+`DisplayText::units` returning an array copy versus a custom iterator.
 
 ## Next implementation step
 
-Move the existing `DisplayLine` implementation and tests from `unicodewidth`,
+Move the existing `DisplayText` implementation and tests from `unicodewidth`,
 then update package metadata and docs for the new module.
 
 ## Validation plan
@@ -84,14 +84,14 @@ then update package metadata and docs for the new module.
 
 ### Goal
 
-Move single-line soft wrapping into `displayline` so TUI callers can wrap a
-`DisplayLine` without traversing low-level display units.
+Move single-line soft wrapping into `displaytext` so TUI callers can wrap a
+`DisplayText` without traversing low-level display units.
 
 ### Accepted design
 
-Expose `DisplayLine::wrap(width : Int) -> Array[DisplayRange]`.
+Expose `DisplayText::wrap(width : Int) -> Array[DisplayRange]`.
 `DisplayRange` represents a half-open textual range on the original
-`DisplayLine`, along with that range's display-cell width.
+`DisplayText`, along with that range's display-cell width.
 
 `width <= 0` is normalized to 1. The returned array always contains at least one
 range. Empty lines return one empty range. A display unit wider than the wrap
@@ -100,8 +100,8 @@ display unit.
 
 ### Target files and surfaces
 
-- `display_line.mbt`: add `DisplayRange` and `DisplayLine::wrap`.
-- `displayline_test.mbt`: cover wrapping ASCII/CJK, emoji, zero-width units,
+- `display_text.mbt`: add `DisplayRange` and `DisplayText::wrap`.
+- `displaytext_test.mbt`: cover wrapping ASCII/CJK, emoji, zero-width units,
   oversized units, empty lines, and invalid widths.
 - `README.mbt.md`: document soft wrapping.
 - `pkg.generated.mbti`: generated interface update from `moon info`.
@@ -111,11 +111,11 @@ display unit.
 Expected additions:
 
 - opaque `DisplayRange`
-- `DisplayLine::wrap(Self, Int) -> Array[DisplayRange]`
+- `DisplayText::wrap(Self, Int) -> Array[DisplayRange]`
 - `DisplayRange::start(Self) -> TextualPosition`
 - `DisplayRange::end(Self) -> TextualPosition`
 - `DisplayRange::width(Self) -> Int`
-- `DisplayRange::view(Self, DisplayLine) -> StringView`
+- `DisplayRange::view(Self, DisplayText) -> StringView`
 
 ### Open questions
 
@@ -140,22 +140,22 @@ values at display-cell boundaries.
 
 ### Goal
 
-Narrow `displayline` to Unicode-aware hard-line splitting and display-position
+Narrow `displaytext` to Unicode-aware hard-line splitting and display-position
 primitives. Soft wrapping belongs to consumers such as openseek because they own
 viewport, style, and row policy.
 
 ### Accepted design
 
-Expose `split_lines(text : StringView, cjk? : Bool) -> Array[DisplayLine]` as
-the only public constructor for `DisplayLine`.
+Expose `split_lines(text : StringView, cjk? : Bool) -> Array[DisplayText]` as
+the only public constructor for `DisplayText`.
 
 `split_lines` accepts arbitrary plain text and splits on hard line breaks:
 `\n`, `\r\n`, and `\r`. Line-ending text is not included in returned
-`DisplayLine` values. Empty lines are preserved, including the trailing empty
+`DisplayText` values. Empty lines are preserved, including the trailing empty
 line after a final line break.
 
-Remove public `display_line`, `DisplayLine::wrap`, `DisplayLine::units`, and
-`DisplayRange`. Keep `DisplayLine::width`, cursor movement,
+Remove public `display_text`, `DisplayText::wrap`, `DisplayText::units`, and
+`DisplayRange`. Keep `DisplayText::width`, cursor movement,
 display/textual-position conversion, zero-copy `view`, and `truncate`.
 
 Consumers that need soft wrap maintain their own used display columns and use
@@ -163,37 +163,37 @@ Consumers that need soft wrap maintain their own used display columns and use
 
 ### Target files and surfaces
 
-- `display_line.mbt`: add `split_lines`, private single-line construction, and
+- `display_text.mbt`: add `split_lines`, private single-line construction, and
   remove public `units`/`wrap`.
 - `display_range.mbt`: remove the obsolete `DisplayRange` type.
-- `displayline_test.mbt`: rewrite tests to use `split_lines` and public
+- `displaytext_test.mbt`: rewrite tests to use `split_lines` and public
   position/view APIs.
 - `README.mbt.md`: document `split_lines` and primitive-only scope.
-- `pkg.generated.mbti`: generated public API should remove `display_line`,
-  `DisplayLine::wrap`, `DisplayLine::units`, `DisplayRange`, and all
+- `pkg.generated.mbti`: generated public API should remove `display_text`,
+  `DisplayText::wrap`, `DisplayText::units`, `DisplayRange`, and all
   `DisplayUnit` accessors.
-- openseek `displayline-api-trial`: replace `display_line` construction with
+- openseek `displaytext-api-trial`: replace `display_text` construction with
   `split_lines`, move soft wrap to composer, and remove direct use of
-  `DisplayLine::units`.
+  `DisplayText::units`.
 
 ### API/interface diff
 
 Expected public API:
 
-- `pub fn split_lines(StringView, cjk? : Bool) -> Array[DisplayLine]`
-- opaque `DisplayLine`
+- `pub fn split_lines(StringView, cjk? : Bool) -> Array[DisplayText]`
+- opaque `DisplayText`
 - opaque `TextualPosition`
 - opaque `DisplayPosition`
-- `DisplayLine::width(Self) -> Int`
-- `DisplayLine::start(Self) -> TextualPosition`
-- `DisplayLine::end(Self) -> TextualPosition`
-- `DisplayLine::next(Self, TextualPosition) -> TextualPosition?`
-- `DisplayLine::prev(Self, TextualPosition) -> TextualPosition?`
-- `DisplayLine::display_position(Self, TextualPosition) -> DisplayPosition`
-- `DisplayLine::textual_position_at_or_before(Self, DisplayPosition) -> TextualPosition`
-- `DisplayLine::textual_position_at_or_after(Self, DisplayPosition) -> TextualPosition`
-- `DisplayLine::view(Self, TextualPosition, TextualPosition) -> StringView`
-- `DisplayLine::truncate(Self, Int, suffix? : StringView) -> String`
+- `DisplayText::width(Self) -> Int`
+- `DisplayText::start(Self) -> TextualPosition`
+- `DisplayText::end(Self) -> TextualPosition`
+- `DisplayText::next(Self, TextualPosition) -> TextualPosition?`
+- `DisplayText::prev(Self, TextualPosition) -> TextualPosition?`
+- `DisplayText::display_position(Self, TextualPosition) -> DisplayPosition`
+- `DisplayText::textual_position_at_or_before(Self, DisplayPosition) -> TextualPosition`
+- `DisplayText::textual_position_at_or_after(Self, DisplayPosition) -> TextualPosition`
+- `DisplayText::view(Self, TextualPosition, TextualPosition) -> StringView`
+- `DisplayText::truncate(Self, Int, suffix? : StringView) -> String`
 - `DisplayPosition::new(column~ : Int) -> DisplayPosition`
 - `DisplayPosition::column(Self) -> Int`
 
@@ -204,7 +204,7 @@ after the plain composer migration is validated.
 
 ### Next implementation step
 
-Update `displayline`, run its tests, then migrate openseek against the new API.
+Update `displaytext`, run its tests, then migrate openseek against the new API.
 
 ### Validation plan
 
@@ -227,47 +227,100 @@ separate operation.
 
 ### Accepted design
 
-Expose `DisplayLine::new(text : String, cjk? : Bool = false) -> DisplayLine`.
+Expose `DisplayText::new(text : String, cjk? : Bool = false) -> DisplayText`.
 The constructor treats the full input string as one display line and is not
 aware of `\n`, `\r\n`, or `\r`. `split_lines(text, cjk?)` remains the API for
-multiline text and reuses `DisplayLine::new` for each hard-line segment it
+multiline text and reuses `DisplayText::new` for each hard-line segment it
 emits.
 
 ### Target files and surfaces
 
-- `display_line.mbt`: make the single-line constructor public and route
+- `display_text.mbt`: make the single-line constructor public and route
   `split_lines` through it.
-- `displayline_test.mbt`: cover that `DisplayLine::new` does not split hard
+- `displaytext_test.mbt`: cover that `DisplayText::new` does not split hard
   newlines.
-- `README.mbt.md`: document when to use `DisplayLine::new` versus
+- `README.mbt.md`: document when to use `DisplayText::new` versus
   `split_lines`.
-- `pkg.generated.mbti`: generated interface should expose `DisplayLine::new`.
-- openseek `displayline-api-trial`: replace known-single-line
-  `split_lines(...)[0]` call sites with `DisplayLine::new`, including prompt
+- `pkg.generated.mbti`: generated interface should expose `DisplayText::new`.
+- openseek `displaytext-api-trial`: replace known-single-line
+  `split_lines(...)[0]` call sites with `DisplayText::new`, including prompt
   prefix values.
 
 ### API/interface diff
 
 Expected addition:
 
-- `pub fn DisplayLine::new(String, cjk? : Bool) -> DisplayLine`
+- `pub fn DisplayText::new(String, cjk? : Bool) -> DisplayText`
 
 No existing public API should be removed in this pass.
 
 ### Open questions
 
 None. A future borrowed constructor can be considered separately if
-`DisplayLine` stops owning its backing text.
+`DisplayText` stops owning its backing text.
 
 ### Next implementation step
 
-Add the constructor in `displayline`, then migrate openseek single-line call
-sites and prefix-returning APIs to use `DisplayLine` directly.
+Add the constructor in `displaytext`, then migrate openseek single-line call
+sites and prefix-returning APIs to use `DisplayText` directly.
 
 ### Validation plan
 
-- In displayline, run `moon fmt`, `moon check`, `moon test`, `moon info`, and
+- In displaytext, run `moon fmt`, `moon check`, `moon test`, `moon info`, and
   `git diff --check`.
 - In openseek trial worktree, run `moon fmt`, `moon check`,
   `moon test --target native tui/internal/text tui/internal/composer tui/internal/render tui`,
   `moon info`, and `git diff --check`.
+
+## Checkpoint: rename package to displaytext
+
+### Goal
+
+Rename the public module/package identity from `displayline` to `displaytext`
+and rename `DisplayLine` to `DisplayText`, matching the current scope: terminal
+display-cell text boundaries, not line layout.
+
+### Accepted Design
+
+The module becomes `moonbit-community/displaytext`. The public type becomes
+`DisplayText`.
+
+`DisplayText::new(text : String, cjk? : Bool = false)` remains a single text-run
+constructor and is not hard-newline aware. `split_lines(text, cjk?)` remains the
+API that splits multiline input into `Array[DisplayText]`.
+
+No compatibility aliases are kept in this pass because openseek is migrated in
+lockstep and the package has not been published under the new narrowed API.
+
+### Target Files And Surfaces
+
+- `moon.mod`: module name, repository, description.
+- source/test/docs filenames and text: `display_line` / `displayline` /
+  `DisplayLine` to `display_text` / `displaytext` / `DisplayText`.
+- `pkg.generated.mbti`: generated public package name and type signatures.
+- openseek trial worktree: dependency/import/type references updated to
+  `moonbit-community/displaytext` / `@displaytext` / `DisplayText`.
+
+### API/Interface Diff
+
+- package: `moonbit-community/displayline` -> `moonbit-community/displaytext`
+- type: `DisplayLine` -> `DisplayText`
+- `split_lines(StringView, cjk? : Bool) -> Array[DisplayText]`
+- `DisplayText::new(String, cjk? : Bool) -> DisplayText`
+
+### Open Questions
+
+The repository directory may remain `displayline` locally for now; module name
+is the import identity. A repository rename can happen separately.
+
+### Next Implementation Step
+
+Rename the displaytext module and source symbols, then migrate openseek imports.
+
+### Validation Plan
+
+- In displaytext, run `moon fmt`, `moon check`, `moon test`, `moon info`, and
+  `git diff --check`.
+- In openseek trial worktree, run `moon fmt`, `moon check`,
+  `moon test --target native tui/doc tui/internal/text tui/internal/composer tui/internal/render tui`,
+  `moon info`, `rg` for old names, and `git diff --check`.

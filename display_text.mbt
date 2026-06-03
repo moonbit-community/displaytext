@@ -5,14 +5,14 @@
 // copied, modified, or distributed except according to those terms.
 
 ///|
-/// A legal boundary in a `DisplayLine`.
+/// A legal boundary in a `DisplayText`.
 ///
-/// Values are produced by `DisplayLine` methods. They are intentionally opaque
+/// Values are produced by `DisplayText` methods. They are intentionally opaque
 /// so callers cannot accidentally point into the middle of a display unit.
 struct TextualPosition(Int) derive(Eq)
 
 ///|
-/// A display-column position in a single `DisplayLine`.
+/// A display-column position in a single `DisplayText`.
 struct DisplayPosition(Int) derive(Eq)
 
 ///|
@@ -87,8 +87,8 @@ fn DisplayUnit::display_end(self : DisplayUnit) -> DisplayPosition {
 }
 
 ///|
-/// A single logical line parsed into terminal display units.
-struct DisplayLine {
+/// A single text run parsed into terminal display units.
+struct DisplayText {
   text : String
   units : Array[DisplayUnit]
   width : Int
@@ -131,7 +131,7 @@ fn flush_pending_unit(
 }
 
 ///|
-fn single_unit_line(source : String, width : Int, cjk : Bool) -> DisplayLine {
+fn single_unit_line(source : String, width : Int, cjk : Bool) -> DisplayText {
   if source.length() == 0 {
     { text: source, units: [], width, cjk }
   } else {
@@ -189,7 +189,7 @@ fn display_units_for(source : String, cjk : Bool) -> Array[DisplayUnit] {
 }
 
 ///|
-fn make_display_line(source : String, cjk : Bool) -> DisplayLine {
+fn make_display_text(source : String, cjk : Bool) -> DisplayText {
   let width = @unicodewidth.str_width(source, cjk~)
   let units = display_units_for(source, cjk)
   let mut unit_width = 0
@@ -204,64 +204,64 @@ fn make_display_line(source : String, cjk : Bool) -> DisplayLine {
 }
 
 ///|
-/// Parse `text` as one terminal display line.
+/// Parse `text` as one terminal display text run.
 ///
 /// This constructor does not split hard line breaks. If `text` contains `\n`,
-/// `\r\n`, or `\r`, they remain part of this single `DisplayLine`. Use
+/// `\r\n`, or `\r`, they remain part of this single `DisplayText`. Use
 /// `split_lines` when the input may contain multiple hard lines.
-pub fn DisplayLine::new(text : String, cjk? : Bool = false) -> DisplayLine {
-  make_display_line(text, cjk)
+pub fn DisplayText::new(text : String, cjk? : Bool = false) -> DisplayText {
+  make_display_text(text, cjk)
 }
 
 ///|
-/// Split `text` into terminal display lines.
+/// Split `text` into hard-line display text runs.
 ///
 /// Hard line breaks (`\n`, `\r\n`, and `\r`) are not included in the returned
 /// lines. Empty lines are preserved, including the trailing empty line after a
-/// final line break. Each returned `DisplayLine` exposes safe textual
+/// final line break. Each returned `DisplayText` exposes safe textual
 /// boundaries and display columns for TUI editing, truncation, and hit testing.
 pub fn split_lines(
   text : StringView,
   cjk? : Bool = false,
-) -> Array[DisplayLine] {
+) -> Array[DisplayText] {
   let source = text.to_owned()
-  let lines : Array[DisplayLine] = []
+  let lines : Array[DisplayText] = []
   let mut current = StringBuilder()
   for grapheme in @grapheme.grapheme_iter(source) {
     let g = grapheme.to_owned()
     if g == "\n" || g == "\r\n" || g == "\r" {
-      lines.push(DisplayLine::new(current.to_string(), cjk~))
+      lines.push(DisplayText::new(current.to_string(), cjk~))
       current = StringBuilder()
     } else {
       current.write_string(g)
     }
   }
-  lines.push(DisplayLine::new(current.to_string(), cjk~))
+  lines.push(DisplayText::new(current.to_string(), cjk~))
   lines
 }
 
 ///|
-/// Total display width of this line in terminal cells.
-pub fn DisplayLine::width(self : DisplayLine) -> Int {
+/// Total display width of this text run in terminal cells.
+pub fn DisplayText::width(self : DisplayText) -> Int {
   self.width
 }
 
 ///|
-/// The first legal textual boundary in this line.
-pub fn DisplayLine::start(self : DisplayLine) -> TextualPosition {
+/// The first legal textual boundary in this text run.
+pub fn DisplayText::start(self : DisplayText) -> TextualPosition {
   ignore(self)
   TextualPosition(0)
 }
 
 ///|
-/// The final legal textual boundary in this line.
-pub fn DisplayLine::end(self : DisplayLine) -> TextualPosition {
+/// The final legal textual boundary in this text run.
+pub fn DisplayText::end(self : DisplayText) -> TextualPosition {
   TextualPosition(self.units.length())
 }
 
 ///|
-fn DisplayLine::position_index(
-  self : DisplayLine,
+fn DisplayText::position_index(
+  self : DisplayText,
   position : TextualPosition,
 ) -> Int {
   position.0.clamp(min=0, max=self.units.length())
@@ -269,8 +269,8 @@ fn DisplayLine::position_index(
 
 ///|
 /// The next legal textual boundary after `position`, if any.
-pub fn DisplayLine::next(
-  self : DisplayLine,
+pub fn DisplayText::next(
+  self : DisplayText,
   position : TextualPosition,
 ) -> TextualPosition? {
   let index = self.position_index(position)
@@ -283,8 +283,8 @@ pub fn DisplayLine::next(
 
 ///|
 /// The previous legal textual boundary before `position`, if any.
-pub fn DisplayLine::prev(
-  self : DisplayLine,
+pub fn DisplayText::prev(
+  self : DisplayText,
   position : TextualPosition,
 ) -> TextualPosition? {
   let index = self.position_index(position)
@@ -297,8 +297,8 @@ pub fn DisplayLine::prev(
 
 ///|
 /// Convert a legal textual boundary to its display-column position.
-pub fn DisplayLine::display_position(
-  self : DisplayLine,
+pub fn DisplayText::display_position(
+  self : DisplayText,
   position : TextualPosition,
 ) -> DisplayPosition {
   let index = self.position_index(position)
@@ -311,8 +311,8 @@ pub fn DisplayLine::display_position(
 
 ///|
 /// Return the nearest legal textual boundary at or before `position`.
-pub fn DisplayLine::textual_position_at_or_before(
-  self : DisplayLine,
+pub fn DisplayText::textual_position_at_or_before(
+  self : DisplayText,
   position : DisplayPosition,
 ) -> TextualPosition {
   let column = position.column().clamp(min=0, max=self.width)
@@ -329,8 +329,8 @@ pub fn DisplayLine::textual_position_at_or_before(
 
 ///|
 /// Return the nearest legal textual boundary at or after `position`.
-pub fn DisplayLine::textual_position_at_or_after(
-  self : DisplayLine,
+pub fn DisplayText::textual_position_at_or_after(
+  self : DisplayText,
   position : DisplayPosition,
 ) -> TextualPosition {
   let column = position.column().clamp(min=0, max=self.width)
@@ -347,8 +347,8 @@ pub fn DisplayLine::textual_position_at_or_after(
 
 ///|
 /// View between two legal textual boundaries.
-pub fn DisplayLine::view(
-  self : DisplayLine,
+pub fn DisplayText::view(
+  self : DisplayText,
   start : TextualPosition,
   end : TextualPosition,
 ) -> StringView {
@@ -369,10 +369,10 @@ pub fn DisplayLine::view(
 }
 
 ///|
-/// Truncate this line to `width` display cells, appending `suffix` when content
-/// is dropped.
-pub fn DisplayLine::truncate(
-  self : DisplayLine,
+/// Truncate this text run to `width` display cells, appending `suffix` when
+/// content is dropped.
+pub fn DisplayText::truncate(
+  self : DisplayText,
   width : Int,
   suffix? : StringView = "…",
 ) -> String {

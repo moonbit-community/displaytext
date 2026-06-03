@@ -1,8 +1,8 @@
-# displayline
+# displaytext
 
 Grapheme-aware display-cell text boundaries for terminal UIs.
 
-`displayline` combines Unicode grapheme cluster boundaries with
+`displaytext` combines Unicode grapheme cluster boundaries with
 [`unicodewidth`](https://github.com/moonbit-community/unicodewidth.mbt)
 display-width rules. TUI authors can split plain text into hard lines, move
 through each line by safe textual positions, map between textual positions and
@@ -12,23 +12,23 @@ display unit.
 ## Installation
 
 ```console
-> moon add moonbit-community/displayline
+> moon add moonbit-community/displaytext
 ```
 
 ## API
 
-### `DisplayLine::new(s : String, cjk? : Bool = false) -> DisplayLine`
+### `DisplayText::new(s : String, cjk? : Bool = false) -> DisplayText`
 
-Parses `s` as one terminal display line.
+Parses `s` as one terminal display text run.
 
-- `s`: text that the caller already wants to treat as a single line
+- `s`: text that the caller already wants to measure and navigate as one run
 - `cjk`: when `true`, ambiguous-width characters are treated as wide
 
 This constructor does not split hard line breaks. If `s` contains `\n`,
-`\r\n`, or `\r`, those characters remain part of the returned `DisplayLine`.
+`\r\n`, or `\r`, those characters remain part of the returned `DisplayText`.
 Use `split_lines` for arbitrary multiline text.
 
-### `split_lines(s : @string.View, cjk? : Bool = false) -> Array[DisplayLine]`
+### `split_lines(s : @string.View, cjk? : Bool = false) -> Array[DisplayText]`
 
 Splits plain text into hard lines and parses each line into terminal display
 boundaries.
@@ -40,7 +40,7 @@ Hard line breaks are `\n`, `\r\n`, and `\r`. They are not included in returned
 lines. Empty lines are preserved, including the trailing empty line after a
 final line break.
 
-Each returned `DisplayLine` exposes:
+Each returned `DisplayText` exposes:
 
 - total display width with `width()`
 - legal textual boundaries with `start()`, `end()`, `next()`, and `prev()`
@@ -55,7 +55,7 @@ Each returned `DisplayLine` exposes:
 ```mbt nocheck
 ///|
 test {
-  let lines = @displayline.split_lines("a你好b\nnext")
+  let lines = @displaytext.split_lines("a你好b\nnext")
   let line = lines[0]
 
   // Whole-line display width.
@@ -67,7 +67,7 @@ test {
   assert_eq(line.display_position(after_ni).column(), 3)
 
   // Convert a display column inside a wide character back to text boundaries.
-  let middle = @displayline.DisplayPosition::new(column=2)
+  let middle = @displaytext.DisplayPosition::new(column=2)
   assert_eq(
     line
     .view(line.start(), line.textual_position_at_or_before(middle))
@@ -89,14 +89,14 @@ test {
 ### Consumer-Owned Wrapping
 
 Soft wrapping is a layout policy owned by the application. A TUI can maintain
-its own used display columns and ask a `DisplayLine` for the legal textual
+its own used display columns and ask a `DisplayText` for the legal textual
 boundary that fits the remaining width.
 
 ```mbt nocheck
 ///|
 test {
-  let line = @displayline.DisplayLine::new("ab你好")
-  let remaining = @displayline.DisplayPosition::new(column=3)
+  let line = @displaytext.DisplayText::new("ab你好")
+  let remaining = @displaytext.DisplayPosition::new(column=3)
   let end = line.textual_position_at_or_before(remaining)
 
   assert_eq(line.view(line.start(), end).to_owned(), "ab")
@@ -105,12 +105,12 @@ test {
 
 ## Concepts
 
-`DisplayLine` is one line of display-position state. Values created by
+`DisplayText` is one run of display-position state. Values created by
 `split_lines` never contain `\n`, `\r\n`, or `\r`; values created by
-`DisplayLine::new` contain exactly the text the caller passed in.
+`DisplayText::new` contain exactly the text the caller passed in.
 
 `TextualPosition` is a legal boundary in the original line. Values are produced
-by `DisplayLine`; callers cannot construct arbitrary positions inside a display
+by `DisplayText`; callers cannot construct arbitrary positions inside a display
 unit.
 
 `DisplayPosition` is a zero-based terminal display column. Construct it with

@@ -5,17 +5,17 @@
 // copied, modified, or distributed except according to those terms.
 
 ///|
-fn line(text : String) -> @displayline.DisplayLine {
-  @displayline.DisplayLine::new(text)
+fn line(text : String) -> @displaytext.DisplayText {
+  @displaytext.DisplayText::new(text)
 }
 
 ///|
-fn line_text(line : @displayline.DisplayLine) -> String {
+fn line_text(line : @displaytext.DisplayText) -> String {
   line.view(line.start(), line.end()).to_owned()
 }
 
 ///|
-fn line_texts(lines : Array[@displayline.DisplayLine]) -> String {
+fn line_texts(lines : Array[@displaytext.DisplayText]) -> String {
   let parts : Array[String] = []
   for line in lines {
     parts.push(line_text(line))
@@ -24,7 +24,7 @@ fn line_texts(lines : Array[@displayline.DisplayLine]) -> String {
 }
 
 ///|
-fn display_unit_summary(line : @displayline.DisplayLine) -> String {
+fn display_unit_summary(line : @displaytext.DisplayText) -> String {
   let parts : Array[String] = []
   let mut start = line.start()
   let mut done = false
@@ -45,24 +45,24 @@ fn display_unit_summary(line : @displayline.DisplayLine) -> String {
 }
 
 ///|
-fn view_at_or_before(line : @displayline.DisplayLine, column : Int) -> String {
+fn view_at_or_before(line : @displaytext.DisplayText, column : Int) -> String {
   line
   .view(
     line.start(),
     line.textual_position_at_or_before(
-      @displayline.DisplayPosition::new(column~),
+      @displaytext.DisplayPosition::new(column~),
     ),
   )
   .to_owned()
 }
 
 ///|
-fn view_at_or_after(line : @displayline.DisplayLine, column : Int) -> String {
+fn view_at_or_after(line : @displaytext.DisplayText, column : Int) -> String {
   line
   .view(
     line.start(),
     line.textual_position_at_or_after(
-      @displayline.DisplayPosition::new(column~),
+      @displaytext.DisplayPosition::new(column~),
     ),
   )
   .to_owned()
@@ -70,26 +70,26 @@ fn view_at_or_after(line : @displayline.DisplayLine, column : Int) -> String {
 
 ///|
 test "split lines handles hard line breaks" {
-  let lines = @displayline.split_lines("a\r\nb\rc\n")
+  let lines = @displaytext.split_lines("a\r\nb\rc\n")
   inspect(lines.length(), content="4")
   inspect(line_texts(lines), content="a|b|c|")
 }
 
 ///|
 test "split lines preserves empty lines" {
-  let empty = @displayline.split_lines("")
+  let empty = @displaytext.split_lines("")
   inspect(empty.length(), content="1")
   inspect(line_texts(empty), content="")
-  let lines = @displayline.split_lines("a\n\nb")
+  let lines = @displaytext.split_lines("a\n\nb")
   inspect(lines.length(), content="3")
   inspect(line_texts(lines), content="a||b")
 }
 
 ///|
 test "display line constructor treats input as one line" {
-  let line = @displayline.DisplayLine::new("a\nb")
+  let line = @displaytext.DisplayText::new("a\nb")
   inspect(line_text(line), content="a\nb")
-  inspect(@displayline.split_lines("a\nb").length(), content="2")
+  inspect(@displaytext.split_lines("a\nb").length(), content="2")
 }
 
 ///|
@@ -110,7 +110,7 @@ test "display line maps textual and display positions" {
   let after_hao = line.next(after_ni).unwrap()
   inspect(line.view(after_a, after_hao), content="你好")
   inspect(line.display_position(after_ni).column(), content="3")
-  let inside_ni = @displayline.DisplayPosition::new(column=2)
+  let inside_ni = @displaytext.DisplayPosition::new(column=2)
   inspect(
     line.view(line.start(), line.textual_position_at_or_before(inside_ni)),
     content="a",
@@ -144,14 +144,14 @@ test "display line handles boundary positions" {
   inspect(line.view(before_end, end), content="b")
   inspect(
     line.textual_position_at_or_after(
-      @displayline.DisplayPosition::new(column=0),
+      @displaytext.DisplayPosition::new(column=0),
     ) ==
     start,
     content="true",
   )
   inspect(
     line.textual_position_at_or_after(
-      @displayline.DisplayPosition::new(column=99),
+      @displaytext.DisplayPosition::new(column=99),
     ) ==
     end,
     content="true",
@@ -225,7 +225,7 @@ test "display line merges non additive grapheme runs" {
 ///|
 test "display line finds legal prefix by display column" {
   let line = line("ab你好")
-  let three = @displayline.DisplayPosition::new(column=3)
+  let three = @displaytext.DisplayPosition::new(column=3)
   inspect(
     line.view(line.start(), line.textual_position_at_or_before(three)),
     content="ab",

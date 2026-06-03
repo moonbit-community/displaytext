@@ -1,28 +1,28 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "moonbit-community/displayline"
+package "moonbit-community/displaytext"
 
 // Values
-pub fn split_lines(StringView, cjk? : Bool) -> Array[DisplayLine]
+pub fn split_lines(StringView, cjk? : Bool) -> Array[DisplayText]
 
 // Errors
 
 // Types and methods
-type DisplayLine
-pub fn DisplayLine::display_position(Self, TextualPosition) -> DisplayPosition
-pub fn DisplayLine::end(Self) -> TextualPosition
-pub fn DisplayLine::new(String, cjk? : Bool) -> Self
-pub fn DisplayLine::next(Self, TextualPosition) -> TextualPosition?
-pub fn DisplayLine::prev(Self, TextualPosition) -> TextualPosition?
-pub fn DisplayLine::start(Self) -> TextualPosition
-pub fn DisplayLine::textual_position_at_or_after(Self, DisplayPosition) -> TextualPosition
-pub fn DisplayLine::textual_position_at_or_before(Self, DisplayPosition) -> TextualPosition
-pub fn DisplayLine::truncate(Self, Int, suffix? : StringView) -> String
-pub fn DisplayLine::view(Self, TextualPosition, TextualPosition) -> StringView
-pub fn DisplayLine::width(Self) -> Int
-
 type DisplayPosition derive(Eq)
 pub fn DisplayPosition::column(Self) -> Int
 pub fn DisplayPosition::new(column~ : Int) -> Self
+
+type DisplayText
+pub fn DisplayText::display_position(Self, TextualPosition) -> DisplayPosition
+pub fn DisplayText::end(Self) -> TextualPosition
+pub fn DisplayText::new(String, cjk? : Bool) -> Self
+pub fn DisplayText::next(Self, TextualPosition) -> TextualPosition?
+pub fn DisplayText::prev(Self, TextualPosition) -> TextualPosition?
+pub fn DisplayText::start(Self) -> TextualPosition
+pub fn DisplayText::textual_position_at_or_after(Self, DisplayPosition) -> TextualPosition
+pub fn DisplayText::textual_position_at_or_before(Self, DisplayPosition) -> TextualPosition
+pub fn DisplayText::truncate(Self, Int, suffix? : StringView) -> String
+pub fn DisplayText::view(Self, TextualPosition, TextualPosition) -> StringView
+pub fn DisplayText::width(Self) -> Int
 
 type TextualPosition derive(Eq)
 
