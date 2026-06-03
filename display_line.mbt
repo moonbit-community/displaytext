@@ -241,6 +241,38 @@ pub fn DisplayLine::units(self : DisplayLine) -> Array[DisplayUnit] {
 }
 
 ///|
+/// Soft-wrap this line into display ranges no wider than `width`, unless a
+/// single display unit is wider than `width` and must occupy its own range.
+///
+/// `width <= 0` is treated as `1`. The result always contains at least one
+/// range, even for an empty line.
+pub fn DisplayLine::wrap(
+  self : DisplayLine,
+  width : Int,
+) -> Array[DisplayRange] {
+  let width = width.max(1)
+  let ranges : Array[DisplayRange] = []
+  let mut range_start = self.start()
+  let mut range_end = range_start
+  let mut range_width = 0
+  let mut range_filled = false
+  for unit in self.units {
+    let unit_width = unit.width()
+    if range_filled && range_width + unit_width > width {
+      ranges.push({ start: range_start, end: range_end, width: range_width })
+      range_start = unit.textual_start()
+      range_width = 0
+      range_filled = false
+    }
+    range_width += unit_width
+    range_end = unit.textual_end()
+    range_filled = true
+  }
+  ranges.push({ start: range_start, end: range_end, width: range_width })
+  ranges
+}
+
+///|
 /// The first legal textual boundary in this line.
 pub fn DisplayLine::start(self : DisplayLine) -> TextualPosition {
   ignore(self)

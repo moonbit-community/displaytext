@@ -16,6 +16,20 @@ fn display_unit_summary(line : @displayline.DisplayLine) -> String {
 }
 
 ///|
+fn display_range_summary(
+  line : @displayline.DisplayLine,
+  width : Int,
+) -> String {
+  let parts : Array[String] = []
+  for range in line.wrap(width) {
+    parts.push(
+      "\{range.view(line)}:w\{range.width()}:c\{line.display_position(range.start()).column()}-\{line.display_position(range.end()).column()}",
+    )
+  }
+  parts.join("|")
+}
+
+///|
 fn view_at_or_before(line : @displayline.DisplayLine, column : Int) -> String {
   line
   .view(
@@ -217,4 +231,51 @@ test "display line units returns a copy" {
   units.push(units[0])
   inspect(units.length(), content="5")
   inspect(line.units().length(), content="4")
+}
+
+///|
+test "display line wraps on display unit boundaries" {
+  let line = @displayline.display_line("a你好b")
+  inspect(display_range_summary(line, 3), content="a你:w3:c0-3|好b:w3:c3-6")
+  inspect(
+    display_range_summary(line, 2),
+    content="a:w1:c0-1|你:w2:c1-3|好:w2:c3-5|b:w1:c5-6",
+  )
+}
+
+///|
+test "display line wrap handles empty and invalid width" {
+  let empty = @displayline.display_line("")
+  let ranges = empty.wrap(4)
+  inspect(ranges.length(), content="1")
+  inspect(ranges[0].view(empty), content="")
+  inspect(ranges[0].width(), content="0")
+  let line = @displayline.display_line("ab")
+  inspect(display_range_summary(line, 0), content="a:w1:c0-1|b:w1:c1-2")
+  inspect(display_range_summary(line, -1), content="a:w1:c0-1|b:w1:c1-2")
+}
+
+///|
+test "display line wrap handles emoji and zero-width units" {
+  let emoji = @displayline.display_line("x👨‍👩‍👧‍👦y")
+  inspect(
+    display_range_summary(emoji, 3),
+    content="x👨‍👩‍👧‍👦:w3:c0-3|y:w1:c3-4",
+  )
+  let zero_width = @displayline.display_line("a\u{200B}b")
+  let ranges = zero_width.wrap(1)
+  inspect(ranges.length(), content="2")
+  inspect(ranges[0].view(zero_width), content="a\u{200B}")
+  inspect(ranges[0].width(), content="1")
+  inspect(ranges[1].view(zero_width), content="b")
+  inspect(ranges[1].width(), content="1")
+}
+
+///|
+test "display line wrap keeps oversized unit whole" {
+  let line = @displayline.display_line("a你b")
+  inspect(
+    display_range_summary(line, 1),
+    content="a:w1:c0-1|你:w2:c1-3|b:w1:c3-4",
+  )
 }

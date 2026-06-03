@@ -33,6 +33,7 @@ The returned `DisplayLine` exposes:
 - conversion from display columns to textual boundaries with
   `textual_position_at_or_before()` and `textual_position_at_or_after()`
 - zero-copy text views with `view()`
+- soft wrapping with `wrap()`
 - terminal-cell truncation with `truncate()`
 
 ## Usage
@@ -70,6 +71,25 @@ test {
 }
 ```
 
+### Soft Wrapping
+
+`DisplayLine::wrap(width)` returns display ranges that cover the original line
+without cutting through a display unit. Use each range with `DisplayRange::view`
+to render a visual row.
+
+```mbt nocheck
+///|
+test {
+  let line = @displayline.display_line("a你好b")
+  let rows = line.wrap(3)
+
+  assert_eq(rows[0].view(line).to_owned(), "a你")
+  assert_eq(rows[0].width(), 3)
+  assert_eq(rows[1].view(line).to_owned(), "好b")
+  assert_eq(rows[1].width(), 3)
+}
+```
+
 ## Concepts
 
 `TextualPosition` is a legal boundary in the original line. Values are produced
@@ -82,6 +102,10 @@ unit.
 `DisplayUnit` is the smallest slice this layout will step through or truncate
 across. Usually it is one grapheme cluster. When adjacent grapheme clusters form
 a non-additive display sequence, they are merged into one unit.
+
+`DisplayRange` is a half-open textual range on a `DisplayLine`, usually returned
+by `DisplayLine::wrap`. It carries the range's display width and can create a
+zero-copy view of the covered text.
 
 ## Scope
 
