@@ -69,13 +69,11 @@ test {
   // Convert a display column inside a wide character back to text boundaries.
   let middle = @displaytext.DisplayPosition::new(column=2)
   assert_eq(
-    line
-    .view(line.start(), line.textual_position_at_or_before(middle)),
+    line.view(line.start(), line.textual_position_at_or_before(middle)),
     "a",
   )
   assert_eq(
-    line
-    .view(line.start(), line.textual_position_at_or_after(middle)),
+    line.view(line.start(), line.textual_position_at_or_after(middle)),
     "a你",
   )
 
