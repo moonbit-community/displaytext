@@ -96,6 +96,11 @@ struct DisplayText {
 }
 
 ///|
+pub impl Eq for DisplayText with fn equal(self, other) {
+  self.text == other.text
+}
+
+///|
 fn make_display_unit(
   text : StringView,
   width : Int,
