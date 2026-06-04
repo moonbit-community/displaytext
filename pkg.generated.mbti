@@ -11,10 +11,13 @@ type DisplayPosition derive(Eq)
 pub fn DisplayPosition::column(Self) -> Int
 pub fn DisplayPosition::new(column~ : Int) -> Self
 
-type DisplayText
+pub struct DisplayText {
+  // private fields
+}
+#alias(new)
+pub fn DisplayText::DisplayText(String, cjk? : Bool) -> Self
 pub fn DisplayText::display_position(Self, TextualPosition) -> DisplayPosition
 pub fn DisplayText::end(Self) -> TextualPosition
-pub fn DisplayText::new(String, cjk? : Bool) -> Self
 pub fn DisplayText::next(Self, TextualPosition) -> TextualPosition?
 pub fn DisplayText::prev(Self, TextualPosition) -> TextualPosition?
 pub fn DisplayText::start(Self) -> TextualPosition

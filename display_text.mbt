@@ -209,7 +209,11 @@ fn make_display_text(source : String, cjk : Bool) -> DisplayText {
 /// This constructor does not split hard line breaks. If `text` contains `\n`,
 /// `\r\n`, or `\r`, they remain part of this single `DisplayText`. Use
 /// `split_lines` when the input may contain multiple hard lines.
-pub fn DisplayText::new(text : String, cjk? : Bool = false) -> DisplayText {
+#alias(new)
+pub fn DisplayText::DisplayText(
+  text : String,
+  cjk? : Bool = false,
+) -> DisplayText {
   make_display_text(text, cjk)
 }
 
@@ -236,13 +240,13 @@ pub fn split_lines(
   for grapheme in @grapheme.grapheme_iter(source) {
     let g = grapheme.to_owned()
     if g == "\n" || g == "\r\n" || g == "\r" {
-      lines.push(DisplayText::new(current.to_string(), cjk~))
+      lines.push(DisplayText(current.to_string(), cjk~))
       current = StringBuilder()
     } else {
       current.write_string(g)
     }
   }
-  lines.push(DisplayText::new(current.to_string(), cjk~))
+  lines.push(DisplayText(current.to_string(), cjk~))
   lines
 }
 

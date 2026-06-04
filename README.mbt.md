@@ -17,7 +17,7 @@ display unit.
 
 ## API
 
-### `DisplayText::new(s : String, cjk? : Bool = false) -> DisplayText`
+### `DisplayText(s : String, cjk? : Bool = false) -> DisplayText`
 
 Parses `s` as one terminal display text run.
 
@@ -91,7 +91,7 @@ boundary that fits the remaining width.
 ```mbt check
 ///|
 test {
-  let line = @displaytext.DisplayText::new("ab你好")
+  let line = @displaytext.DisplayText::DisplayText("ab你好")
   let remaining = @displaytext.DisplayPosition::new(column=3)
   let end = line.textual_position_at_or_before(remaining)
 

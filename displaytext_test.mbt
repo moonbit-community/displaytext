@@ -6,7 +6,7 @@
 
 ///|
 fn line(text : String) -> @displaytext.DisplayText {
-  @displaytext.DisplayText::new(text)
+  @displaytext.DisplayText(text)
 }
 
 ///|
@@ -82,7 +82,7 @@ test "split lines preserves empty lines" {
 
 ///|
 test "display line constructor treats input as one line" {
-  let line = @displaytext.DisplayText::new("a\nb")
+  let line = @displaytext.DisplayText("a\nb")
   inspect(line.text(), content="a\nb")
   inspect(@displaytext.split_lines("a\nb").length(), content="2")
 }
