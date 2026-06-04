@@ -218,6 +218,74 @@ test "display line merges non additive grapheme runs" {
 }
 
 ///|
+test "display line maps textual boundaries to char offsets" {
+  // "a你好b" — single-code-unit ASCII, two-cell CJK each one code unit.
+  let line = line("a你好b")
+  inspect(line.char_offset(line.start()), content="0")
+  inspect(line.char_offset(line.end()), content="4")
+  let after_a = line.next(line.start()).unwrap()
+  inspect(line.char_offset(after_a), content="1")
+  let after_ni = line.next(after_a).unwrap()
+  inspect(line.char_offset(after_ni), content="2")
+  // char_offset is the inverse of textual_position_at_char on exact boundaries.
+  inspect(line.textual_position_at_char(offset=2) == after_ni, content="true")
+}
+
+///|
+test "display line finds legal boundary by char offset" {
+  let line = line("ab你好")
+  // Offsets land exactly on boundaries here (all code units are one char wide).
+  inspect(
+    line.view(line.start(), line.textual_position_at_char(offset=2)),
+    content="ab",
+  )
+  inspect(
+    line.view(line.start(), line.textual_position_at_char(offset=3)),
+    content="ab你",
+  )
+  // Out-of-range offsets clamp to the text bounds.
+  inspect(
+    line.view(line.start(), line.textual_position_at_char(offset=99)),
+    content="ab你好",
+  )
+  inspect(
+    line.textual_position_at_char(offset=-5) == line.start(),
+    content="true",
+  )
+}
+
+///|
+test "char offset snaps back inside a non-additive unit" {
+  // "لا" merges into one display unit spanning code units [0, 2). Offset 1 sits
+  // inside that unit, where no legal boundary exists, so it snaps to the start.
+  let line = line("\u{644}\u{627}")
+  inspect(
+    line.textual_position_at_char(offset=0) == line.start(),
+    content="true",
+  )
+  inspect(
+    line.textual_position_at_char(offset=1) == line.start(),
+    content="true",
+  )
+  inspect(line.textual_position_at_char(offset=2) == line.end(), content="true")
+  // The single unit's only interior boundaries are start and end.
+  inspect(line.char_offset(line.start()), content="0")
+  inspect(line.char_offset(line.end()), content="2")
+}
+
+///|
+test "char offset round trips on an empty line" {
+  let line = line("")
+  inspect(line.char_offset(line.start()), content="0")
+  inspect(line.char_offset(line.end()), content="0")
+  inspect(
+    line.textual_position_at_char(offset=0) == line.start(),
+    content="true",
+  )
+  inspect(line.textual_position_at_char(offset=3) == line.end(), content="true")
+}
+
+///|
 test "display line finds legal prefix by display column" {
   let line = line("ab你好")
   let three = @displaytext.DisplayPosition::new(column=3)

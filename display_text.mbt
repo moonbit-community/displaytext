@@ -361,6 +361,57 @@ pub fn DisplayText::textual_position_at_or_after(
 }
 
 ///|
+/// The UTF-16 code-unit offset of a legal textual boundary in the underlying
+/// `text` (the same unit as `String::length`).
+///
+/// This is the textual analogue of `display_position`: where that projects a
+/// boundary onto display columns, this projects it onto raw string offsets. It
+/// is the inverse of `textual_position_at_char`.
+pub fn DisplayText::char_offset(
+  self : DisplayText,
+  position : TextualPosition,
+) -> Int {
+  let index = self.position_index(position)
+  if index >= self.units.length() {
+    self.text.length()
+  } else {
+    self.units[index].text().start_offset()
+  }
+}
+
+///|
+/// The nearest legal textual boundary at or before `offset`, a UTF-16 code-unit
+/// offset into the underlying `text` (the same unit as `String::length`).
+///
+/// When `offset` lands inside a display unit — for example midway through a
+/// non-additive grapheme run like an Arabic lam-alef ligature, where no legal
+/// boundary exists — it snaps back to the start of that unit. This is the char
+/// analogue of `textual_position_at_or_before`, and the inverse of
+/// `char_offset`. Out-of-range offsets are clamped to `[0, text length]`.
+pub fn DisplayText::textual_position_at_char(
+  self : DisplayText,
+  offset~ : Int,
+) -> TextualPosition {
+  let offset = offset.clamp(min=0, max=self.text.length())
+  // Boundaries are sorted by char offset (boundary 0 sits at 0; boundary k>0 at
+  // the end of unit k-1), so binary-search for the last boundary at or before
+  // `offset`. Boundary 0 always qualifies, so the answer is at least `start`.
+  let mut lo = 0
+  let mut hi = self.units.length()
+  while lo < hi {
+    let mid = (lo + hi + 1) / 2
+    let unit = self.units[mid - 1]
+    let mid_offset = unit.text().start_offset() + unit.text().length()
+    if mid_offset <= offset {
+      lo = mid
+    } else {
+      hi = mid - 1
+    }
+  }
+  TextualPosition(lo)
+}
+
+///|
 /// View between two legal textual boundaries.
 pub fn DisplayText::view(
   self : DisplayText,
