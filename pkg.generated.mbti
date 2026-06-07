@@ -1,19 +1,23 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "moonbit-community/displaytext"
 
+import {
+  "moonbitlang/core/debug",
+}
+
 // Values
 pub fn split_lines(StringView, cjk? : Bool) -> Array[DisplayText]
 
 // Errors
 
 // Types and methods
-type DisplayPosition derive(Eq)
+type DisplayPosition derive(Eq, @debug.Debug)
 pub fn DisplayPosition::column(Self) -> Int
 pub fn DisplayPosition::new(column~ : Int) -> Self
 
 pub struct DisplayText {
   // private fields
-}
+} derive(@debug.Debug)
 #alias(new)
 pub fn DisplayText::DisplayText(String, cjk? : Bool) -> Self
 pub fn DisplayText::char_offset(Self, TextualPosition) -> Int
@@ -31,7 +35,7 @@ pub fn DisplayText::view(Self, TextualPosition, TextualPosition) -> StringView
 pub fn DisplayText::width(Self) -> Int
 pub impl Eq for DisplayText
 
-type TextualPosition derive(Eq)
+type TextualPosition derive(Eq, @debug.Debug)
 
 // Type aliases
 

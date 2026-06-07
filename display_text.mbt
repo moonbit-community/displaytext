@@ -9,11 +9,11 @@
 ///
 /// Values are produced by `DisplayText` methods. They are intentionally opaque
 /// so callers cannot accidentally point into the middle of a display unit.
-struct TextualPosition(Int) derive(Eq)
+struct TextualPosition(Int) derive(Eq, Debug)
 
 ///|
 /// A display-column position in a single `DisplayText`.
-struct DisplayPosition(Int) derive(Eq)
+struct DisplayPosition(Int) derive(Eq, Debug)
 
 ///|
 /// Build a single-line display position. Negative columns are clamped to zero.
@@ -64,7 +64,7 @@ priv struct DisplayUnit {
   width : Int
   textual_end : TextualPosition
   display_end : DisplayPosition
-}
+} derive(Debug)
 
 ///|
 fn DisplayUnit::text(self : DisplayUnit) -> StringView {
@@ -93,7 +93,7 @@ struct DisplayText {
   units : Array[DisplayUnit]
   width : Int
   cjk : Bool
-}
+} derive(Debug)
 
 ///|
 pub impl Eq for DisplayText with fn equal(self, other) {
