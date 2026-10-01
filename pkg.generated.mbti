@@ -13,31 +13,37 @@ pub fn split_lines(StringView, cjk? : Bool) -> Array[DisplayText]
 // Types and methods
 type DisplayPosition derive(Eq, @debug.Debug)
 pub fn DisplayPosition::column(Self) -> Int
+pub fn DisplayPosition::equal(Self, Self) -> Bool
 pub fn DisplayPosition::new(column~ : Int) -> Self
+pub fn DisplayPosition::not_equal(Self, Self) -> Bool
+pub fn DisplayPosition::to_repr(Self) -> @debug.Repr
 
-pub struct DisplayText {
-  // private fields
-} derive(@debug.Debug)
+type DisplayText derive(@debug.Debug)
 #alias(new)
 pub fn DisplayText::DisplayText(String, cjk? : Bool) -> Self
 pub fn DisplayText::char_offset(Self, TextualPosition) -> Int
 pub fn DisplayText::display_position(Self, TextualPosition) -> DisplayPosition
 pub fn DisplayText::end(Self) -> TextualPosition
+pub fn DisplayText::equal(Self, Self) -> Bool
 pub fn DisplayText::next(Self, TextualPosition) -> TextualPosition?
+pub fn DisplayText::not_equal(Self, Self) -> Bool
 pub fn DisplayText::prev(Self, TextualPosition) -> TextualPosition?
 pub fn DisplayText::start(Self) -> TextualPosition
 pub fn DisplayText::text(Self) -> String
 pub fn DisplayText::textual_position_at_char(Self, offset~ : Int) -> TextualPosition
 pub fn DisplayText::textual_position_at_or_after(Self, DisplayPosition) -> TextualPosition
 pub fn DisplayText::textual_position_at_or_before(Self, DisplayPosition) -> TextualPosition
+pub fn DisplayText::to_repr(Self) -> @debug.Repr
 pub fn DisplayText::truncate(Self, Int, suffix? : StringView) -> String
 pub fn DisplayText::view(Self, TextualPosition, TextualPosition) -> StringView
 pub fn DisplayText::width(Self) -> Int
 pub impl Eq for DisplayText
 
 type TextualPosition derive(Eq, @debug.Debug)
+pub fn TextualPosition::equal(Self, Self) -> Bool
+pub fn TextualPosition::not_equal(Self, Self) -> Bool
+pub fn TextualPosition::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 
 // Traits
-
