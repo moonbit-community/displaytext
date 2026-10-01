@@ -12,8 +12,20 @@
 struct TextualPosition(Int) derive(Eq, Debug)
 
 ///|
+pub extend TextualPosition with Eq::{not_equal, equal}
+
+///|
+pub extend TextualPosition with @debug.Debug::{to_repr}
+
+///|
 /// A display-column position in a single `DisplayText`.
 struct DisplayPosition(Int) derive(Eq, Debug)
+
+///|
+pub extend DisplayPosition with Eq::{not_equal, equal}
+
+///|
+pub extend DisplayPosition with @debug.Debug::{to_repr}
 
 ///|
 /// Build a single-line display position. Negative columns are clamped to zero.
@@ -96,6 +108,12 @@ struct DisplayText {
 } derive(Debug)
 
 ///|
+pub extend DisplayText with @debug.Debug::{to_repr}
+
+///|
+pub extend DisplayText with Eq::{not_equal, equal}
+
+///|
 pub impl Eq for DisplayText with fn equal(self, other) {
   self.text == other.text
 }
@@ -138,7 +156,7 @@ fn flush_pending_unit(
 ///|
 fn single_unit_line(source : String, width : Int, cjk : Bool) -> DisplayText {
   if source.length() == 0 {
-    { text: source, units: [], width, cjk }
+    { text: source, units: [], width, cjk, }
   } else {
     {
       text: source,
@@ -202,7 +220,7 @@ fn make_display_text(source : String, cjk : Bool) -> DisplayText {
     unit_width += unit.width()
   }
   if unit_width == width {
-    { text: source, units, width, cjk }
+    { text: source, units, width, cjk, }
   } else {
     single_unit_line(source, width, cjk)
   }
