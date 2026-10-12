@@ -40,7 +40,7 @@ fn display_unit_summary(line : @displaytext.DisplayText) -> String {
 }
 
 ///|
-fn view_at_or_before(line : @displaytext.DisplayText, column : Int) -> String {
+fn view_at_or_before(line : @displaytext.DisplayText, column : Int32) -> String {
   line
   .view(
     line.start(),
@@ -52,7 +52,7 @@ fn view_at_or_before(line : @displaytext.DisplayText, column : Int) -> String {
 }
 
 ///|
-fn view_at_or_after(line : @displaytext.DisplayText, column : Int) -> String {
+fn view_at_or_after(line : @displaytext.DisplayText, column : Int32) -> String {
   line
   .view(
     line.start(),

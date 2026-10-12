@@ -9,7 +9,7 @@
 ///
 /// Values are produced by `DisplayText` methods. They are intentionally opaque
 /// so callers cannot accidentally point into the middle of a display unit.
-struct TextualPosition(Int) derive(Eq, Debug)
+struct TextualPosition(Int32) derive(Eq, Debug)
 
 ///|
 pub extend TextualPosition with Eq::{not_equal, equal}
@@ -19,7 +19,7 @@ pub extend TextualPosition with @debug.Debug::{to_repr}
 
 ///|
 /// A display-column position in a single `DisplayText`.
-struct DisplayPosition(Int) derive(Eq, Debug)
+struct DisplayPosition(Int32) derive(Eq, Debug)
 
 ///|
 pub extend DisplayPosition with Eq::{not_equal, equal}
@@ -29,13 +29,13 @@ pub extend DisplayPosition with @debug.Debug::{to_repr}
 
 ///|
 /// Build a single-line display position. Negative columns are clamped to zero.
-pub fn DisplayPosition::new(column~ : Int) -> DisplayPosition {
+pub fn DisplayPosition::new(column~ : Int32) -> DisplayPosition {
   DisplayPosition(column.max(0))
 }
 
 ///|
 /// The zero-based terminal display column.
-pub fn DisplayPosition::column(self : DisplayPosition) -> Int {
+pub fn DisplayPosition::column(self : DisplayPosition) -> Int32 {
   self.0
 }
 
@@ -73,7 +73,7 @@ pub fn DisplayPosition::column(self : DisplayPosition) -> Int {
 /// ```
 priv struct DisplayUnit {
   text : StringView
-  width : Int
+  width : Int32
   textual_end : TextualPosition
   display_end : DisplayPosition
 } derive(Debug)
@@ -84,7 +84,7 @@ fn DisplayUnit::text(self : DisplayUnit) -> StringView {
 }
 
 ///|
-fn DisplayUnit::width(self : DisplayUnit) -> Int {
+fn DisplayUnit::width(self : DisplayUnit) -> Int32 {
   self.width
 }
 
@@ -103,7 +103,7 @@ fn DisplayUnit::display_end(self : DisplayUnit) -> DisplayPosition {
 struct DisplayText {
   text : String
   units : Array[DisplayUnit]
-  width : Int
+  width : Int32
   cjk : Bool
 } derive(Debug)
 
@@ -121,9 +121,9 @@ pub impl Eq for DisplayText with fn equal(self, other) {
 ///|
 fn make_display_unit(
   text : StringView,
-  width : Int,
-  textual_index : Int,
-  display_column : Int,
+  width : Int32,
+  textual_index : Int32,
+  display_column : Int32,
 ) -> DisplayUnit {
   {
     text,
@@ -137,11 +137,11 @@ fn make_display_unit(
 fn flush_pending_unit(
   units : Array[DisplayUnit],
   source : String,
-  start : Int,
-  end : Int,
-  width : Int,
-  display_column : Int,
-) -> Int {
+  start : Int32,
+  end : Int32,
+  width : Int32,
+  display_column : Int32,
+) -> Int32 {
   units.push(
     make_display_unit(
       source.view(start_offset=start, end_offset=end),
@@ -154,7 +154,7 @@ fn flush_pending_unit(
 }
 
 ///|
-fn single_unit_line(source : String, width : Int, cjk : Bool) -> DisplayText {
+fn single_unit_line(source : String, width : Int32, cjk : Bool) -> DisplayText {
   if source.length() == 0 {
     { text: source, units: [], width, cjk, }
   } else {
@@ -235,7 +235,7 @@ fn make_display_text(source : String, cjk : Bool) -> DisplayText {
 #alias(new)
 pub fn DisplayText::DisplayText(
   text : String,
-  cjk? : Bool = false,
+  cjk~ : Bool = false,
 ) -> DisplayText {
   make_display_text(text, cjk)
 }
@@ -255,7 +255,7 @@ pub fn DisplayText::text(self : DisplayText) -> String {
 /// boundaries and display columns for TUI editing, truncation, and hit testing.
 pub fn split_lines(
   text : StringView,
-  cjk? : Bool = false,
+  cjk~ : Bool = false,
 ) -> Array[DisplayText] {
   let source = text.to_owned()
   let lines : Array[DisplayText] = []
@@ -275,7 +275,7 @@ pub fn split_lines(
 
 ///|
 /// Total display width of this text run in terminal cells.
-pub fn DisplayText::width(self : DisplayText) -> Int {
+pub fn DisplayText::width(self : DisplayText) -> Int32 {
   self.width
 }
 
@@ -296,7 +296,7 @@ pub fn DisplayText::end(self : DisplayText) -> TextualPosition {
 fn DisplayText::position_index(
   self : DisplayText,
   position : TextualPosition,
-) -> Int {
+) -> Int32 {
   position.0.clamp(min=0, max=self.units.length())
 }
 
@@ -388,7 +388,7 @@ pub fn DisplayText::textual_position_at_or_after(
 pub fn DisplayText::char_offset(
   self : DisplayText,
   position : TextualPosition,
-) -> Int {
+) -> Int32 {
   let index = self.position_index(position)
   if index >= self.units.length() {
     self.text.length()
@@ -408,7 +408,7 @@ pub fn DisplayText::char_offset(
 /// `char_offset`. Out-of-range offsets are clamped to `[0, text length]`.
 pub fn DisplayText::textual_position_at_char(
   self : DisplayText,
-  offset~ : Int,
+  offset~ : Int32,
 ) -> TextualPosition {
   let offset = offset.clamp(min=0, max=self.text.length())
   // Boundaries are sorted by char offset (boundary 0 sits at 0; boundary k>0 at
@@ -457,8 +457,8 @@ pub fn DisplayText::view(
 /// content is dropped.
 pub fn DisplayText::truncate(
   self : DisplayText,
-  width : Int,
-  suffix? : StringView = "…",
+  width : Int32,
+  suffix~ : StringView = "…",
 ) -> String {
   guard width > 0 else { return "" }
   guard self.width > width else { return self.text }
