@@ -4,7 +4,7 @@ version = "0.1.5"
 
 import {
   "moonbit-community/unicodewidth@0.2.1",
-  "kawaz/grapheme@0.10.2",
+  "kawaz/grapheme@0.10.4",
 }
 
 readme = "README.md"
