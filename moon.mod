@@ -4,7 +4,7 @@ version = "0.1.6"
 
 import {
   "moonbit-community/unicodewidth@0.2.1",
-  "kawaz/grapheme@0.10.4",
+  "moonbit-community/unicode-segmentation@0.6.0",
 }
 
 readme = "README.md"

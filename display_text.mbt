@@ -175,7 +175,7 @@ fn display_units_for(source : String, cjk : Bool) -> Array[DisplayUnit] {
   let mut pending_end = 0
   let mut pending_width = 0
   let mut has_pending = false
-  for grapheme in @grapheme.grapheme_iter(source) {
+  for grapheme in @segmentation.graphemes(source) {
     let grapheme_width = @unicodewidth.str_width(grapheme, cjk~)
     if !has_pending {
       pending_start = grapheme.start_offset()
@@ -260,7 +260,7 @@ pub fn split_lines(
   let source = text.to_owned()
   let lines : Array[DisplayText] = []
   let mut current = StringBuilder()
-  for grapheme in @grapheme.grapheme_iter(source) {
+  for grapheme in @segmentation.graphemes(source) {
     let g = grapheme.to_owned()
     if g == "\n" || g == "\r\n" || g == "\r" {
       lines.push(DisplayText(current.to_string(), cjk~))
