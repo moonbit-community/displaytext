@@ -1,5 +1,5 @@
 import {
   "moonbitlang/core/debug",
-  "kawaz/grapheme",
+  "moonbit-community/unicode-segmentation" @segmentation,
   "moonbit-community/unicodewidth",
 }
