@@ -144,7 +144,7 @@ fn flush_pending_unit(
 ) -> Int32 {
   units.push(
     make_display_unit(
-      source.view(start_offset=start, end_offset=end),
+      source.clamped_view(start~, end~),
       width,
       units.length(),
       display_column,
@@ -160,7 +160,7 @@ fn single_unit_line(source : String, width : Int32, cjk : Bool) -> DisplayText {
   } else {
     {
       text: source,
-      units: [make_display_unit(source.view(), width, 0, 0)],
+      units: [make_display_unit(source[:], width, 0, 0)],
       width,
       cjk,
     }
@@ -185,7 +185,7 @@ fn display_units_for(source : String, cjk : Bool) -> Array[DisplayUnit] {
     } else {
       let next_end = grapheme.start_offset() + grapheme.length()
       let combined_width = @unicodewidth.str_width(
-        source.view(start_offset=pending_start, end_offset=next_end),
+        source.clamped_view(start=pending_start, end=next_end),
         cjk~,
       )
       if combined_width == pending_width + grapheme_width {
@@ -449,7 +449,7 @@ pub fn DisplayText::view(
     let end_text = self.units[end - 1].text()
     end_text.start_offset() + end_text.length()
   }
-  self.text.view(start_offset~, end_offset~)
+  self.text.clamped_view(start=start_offset, end=end_offset)
 }
 
 ///|
