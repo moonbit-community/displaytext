@@ -1,6 +1,6 @@
 name = "moonbit-community/displaytext"
 
-version = "0.1.6"
+version = "0.1.7"
 
 import {
   "moonbit-community/unicodewidth@0.2.1",
