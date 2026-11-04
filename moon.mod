@@ -4,7 +4,7 @@ version = "0.1.7"
 
 import {
   "moonbit-community/unicodewidth@0.2.1",
-  "moonbit-community/unicode-segmentation@0.6.0",
+  "moonbit-community/unicode-segmentation@0.7.0",
 }
 
 readme = "README.md"
