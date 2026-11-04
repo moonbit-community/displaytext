@@ -9,7 +9,8 @@
 ///
 /// Values are produced by `DisplayText` methods. They are intentionally opaque
 /// so callers cannot accidentally point into the middle of a display unit.
-struct TextualPosition(Int32) derive(Eq, Debug)
+#derive(Eq, Debug)
+struct TextualPosition(Int32)
 
 ///|
 pub extend TextualPosition with Eq::{not_equal, equal}
@@ -19,7 +20,8 @@ pub extend TextualPosition with @debug.Debug::{to_repr}
 
 ///|
 /// A display-column position in a single `DisplayText`.
-struct DisplayPosition(Int32) derive(Eq, Debug)
+#derive(Eq, Debug)
+struct DisplayPosition(Int32)
 
 ///|
 pub extend DisplayPosition with Eq::{not_equal, equal}
@@ -71,12 +73,13 @@ pub fn DisplayPosition::column(self : DisplayPosition) -> Int32 {
 ///             | "a" | "\u{200B}" | "b" |
 /// display:    0     1            1     2
 /// ```
+#derive(Debug)
 priv struct DisplayUnit {
   text : StringView
   width : Int32
   textual_end : TextualPosition
   display_end : DisplayPosition
-} derive(Debug)
+}
 
 ///|
 fn DisplayUnit::text(self : DisplayUnit) -> StringView {
@@ -100,12 +103,13 @@ fn DisplayUnit::display_end(self : DisplayUnit) -> DisplayPosition {
 
 ///|
 /// A single text run parsed into terminal display units.
+#derive(Debug)
 struct DisplayText {
   text : String
   units : Array[DisplayUnit]
   width : Int32
   cjk : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend DisplayText with @debug.Debug::{to_repr}
